@@ -1,0 +1,55 @@
+Na, Nm, Nc : the number of complete blocks of associated data, plaintext, and ciphertextmessage, respectively
+Ina, Inm, Inc : binary variables equal to 1 if the last block of the respective data type is incomplete, and 0 otherwise
+Blm, Bla, Blc
+
+v1: Ascon with 2x unrolled permutation
+
+a.  Design goal
+
+Support for authenticated encryption, authenticated decryption
+2x unrolled architecture, maximize throughput given the following constraints:
+       1) < 2500 LUTs
+       2) No BRAMs
+       3) no DSP units
+
+b.  Supported maximum sizes of inputs
+
+2^16-1 Bytes
+
+c.  Reference software implementation
+
+ascon128av124
+
+d.  Non-default values of generics and constants
+
+None
+
+e.  Block sizes
+
+AD block size = 128 bites
+Plaintext/Ciphertext block size = 128 bits
+
+f.  Execution times
+
+Execution time of authenticated encryption:
+8 + (5*Na) + 1 + (5*Nm) + 1
+
+Execution time of authenticated decryption:
+8 + (5*Na) + 1 + (5*Nc) + 1
+
+
+g.  Latencies
+
+Latency of authenticated encryption:
+3
+
+Latency of authenticated decryption:
+3
+
+h.  Difference between execution times for a new key and the same key
+
+Authenticated encryption:
+4
+
+Authenticated decryption:
+4

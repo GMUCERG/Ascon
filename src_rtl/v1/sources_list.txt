@@ -1,0 +1,2 @@
+ generated_rtl/FIFOL1.v
+ generated_rtl/lwc.v

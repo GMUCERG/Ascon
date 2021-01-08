@@ -1,0 +1,39 @@
+A. Hardware description language used: Bluespec System Verilog, Verilog (generated from bluespec)
+
+
+B. Use of the hardware description language source files provided as a part of the Development Package
+
+File name           | Used  | Release number | Functional
+                    |       |                | modifications
+                    | (Y/N) |                | (Y/N)
+===================================================================
+Bus.bsv              |   Y   |     7daa1d7     | N
+BusDefines.bsv       |   Y   |     7daa1d7     | N
+BusFIFO.bsv          |   Y   |     7daa1d7     | N
+CryptoCore.bsv       |   Y   |     7daa1d7     | N
+LwcApi.bsv           |   Y   |     7daa1d7     | Y
+
+C. Supported types and order of segment types
+
+a. input to encryption          npub, ad, data
+b. output from encryption       data, tag
+c. input to decryption          npub, ad, data, tag 
+d. output from decryption       data
+
+D. Deviations from the LWC Hardware API v1.0 specification
+
+D.1 Minimum compliance criteria
+
+none
+
+D.2 Interface
+
+none
+
+D.3 Protocol
+
+none
+
+D.4 Timing characteristics
+
+none
