@@ -53,3 +53,57 @@ Authenticated encryption:
 
 Authenticated decryption:
 4
+
+===============================
+
+v2: Ascon with 1 permutation / cycle
+
+a.  Design goal
+
+Support for authenticated encryption, authenticated decryption
+2x unrolled architecture, maximize throughput given the following constraints:
+       1) < 2500 LUTs
+       2) No BRAMs
+       3) no DSP units
+
+b.  Supported maximum sizes of inputs
+
+2^16-1 Bytes
+
+c.  Reference software implementation
+
+ascon128av124
+
+d.  Non-default values of generics and constants
+
+None
+
+e.  Block sizes
+
+AD block size = 128 bites
+Plaintext/Ciphertext block size = 128 bits
+
+f.  Execution times
+
+Execution time of authenticated encryption:
+8 + (10*Na) + 1 + (10*Nm) + 1
+
+Execution time of authenticated decryption:
+8 + (10*Na) + 1 + (10*Nc) + 1
+
+
+g.  Latencies
+
+Latency of authenticated encryption:
+3
+
+Latency of authenticated decryption:
+3
+
+h.  Difference between execution times for a new key and the same key
+
+Authenticated encryption:
+4
+
+Authenticated decryption:
+4
