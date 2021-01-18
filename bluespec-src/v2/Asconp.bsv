@@ -151,4 +151,14 @@ function AsconState asconRound4(AsconState state, UInt#(TLog#(AsconRounds)) roun
     let s = asconRound2(state, roundn);
     return asconRound2(s, roundn-2);
 endfunction
+
+
+function Bit#(32) setBytes(Bit#(32) x, Bit#(32) bytes, Bit#(2) padarg);
+  return case(padarg)
+    2'd0: bytes;
+    2'd1: {bytes[31:24], x[23:0]};
+    2'd2: {bytes[31:16], x[15:0]};
+    default : {bytes[31:8], x[7:0]};
+  endcase;
+endfunction
 endpackage : Asconp

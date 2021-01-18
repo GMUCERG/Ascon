@@ -24,7 +24,7 @@ typedef enum {
 } XState_t deriving(Bits, Eq);
 
 typedef TMul#((TDiv#(SizeOf#(AsconLane),SizeOf#(CoreWord))), NumLanes) NumCoreWords;
-(* synthesize *)
+//(* synthesize *)
 module mkAsconCC(CryptoCoreIfc);
     SIPO#(4, CoreWord) sipo <- mkSIPO;
     PISO#(4, CoreWord) piso <- mkPISO;
@@ -66,11 +66,11 @@ module mkAsconCC(CryptoCoreIfc);
 
 
     /*
-     *  
+     *  a
      */
     (* fire_when_enabled *)
     rule rl_absorb_squeeze if (inState == FULL && xState == ABSORB_SQUEEZE);
-      $display("ABSORB SQUEEZE ", $time);
+      // $display("ABSORB SQUEEZE ", // $time);
       let sipo_data = pack(sipo.data);
       let newState = asconState;
       let bdoValidBytes = 0;
@@ -88,10 +88,10 @@ module mkAsconCC(CryptoCoreIfc);
         end
         AD: begin
           if(inEmptyType) begin
-            $display("Domain sep - Empty AD ", $time);
-            $display(print_state("DSB ", asconState));
+            // $display("Domain sep - Empty AD ", // $time);
+            // $display(print_state("DSB ", asconState));
             newState = domainSep(asconState);
-            $display(print_state("DSA ", newState));
+            // $display(print_state("DSA ", newState));
             finalADStep <= False;
             inState <= IDLE;
           end else begin
@@ -100,12 +100,12 @@ module mkAsconCC(CryptoCoreIfc);
             newState = rXOR(asconState, sipo_data);
             if(inLastOfType) begin
               if(inLastBlockPadded) begin
-                $display("Last AD " ,$time);
+                // $display("Last AD " ,// $time);
                 finalADStep <= True;
                 inPaddedBlockZero <= False;
                 inState <= IDLE;
               end else begin
-                $display("Last AD block is FULL " ,$time);
+                // $display("Last AD block is FULL " ,// $time);
                 inState <= ZERO_FILL;
               end
             end else begin
@@ -115,7 +115,7 @@ module mkAsconCC(CryptoCoreIfc);
         end
         Plaintext, Ciphertext: begin
           if(inEmptyType) begin
-            $display("Empty PT/CT ", $time);
+            // $display("Empty PT/CT ", // $time);
             newState = keyXOR(rXOR(newState, sipo_data), keyR);
             roundCounter <= fromInteger(valueOf(Pa));
             emitTag <= True;
@@ -127,7 +127,7 @@ module mkAsconCC(CryptoCoreIfc);
             xState <= PERMUTE;
             if(inLastOfType) begin
               if(inLastBlockPadded) begin
-                $display("Last PT/CT " , $time);
+                // $display("Last PT/CT " , // $time);
                 emitTag <= True;
                 roundCounter <= fromInteger(valueOf(Pa));
                 newState = keyXOR(newState, keyR);
@@ -156,9 +156,34 @@ module mkAsconCC(CryptoCoreIfc);
       
 
       piso.enq(toChunks({newState.x0, newState.x1}), bdoValidBytes);
-      if(decrypt && !inLastBlockPadded) begin
-        newState.x0 = sipo_data[127:64];
-        newState.x1 = sipo_data[63:0];
+      if(decrypt) begin
+        case(bdoValidBytes)
+          1: begin
+            let t = newState.x0[63:32];
+            newState.x0 = {setBytes(t, sipo_data[127:96], inPadarg),  newState.x0[31:0]};
+            newState.x1 = newState.x1;
+          end
+          2: begin
+            let t = newState.x0[31:0];
+            newState.x0 = {sipo_data[127:96], setBytes(t, sipo_data[95:64], inPadarg)};
+            newState.x1 = newState.x1;
+          end
+          3: begin
+            let t = newState.x1[63:32];
+            newState.x0 = sipo_data[127:64];
+            newState.x1 = {setBytes(t, sipo_data[63:32], inPadarg),  newState.x1[31:0]};
+          end
+          4: begin
+            if(!inLastBlockPadded) begin
+              newState.x0 = sipo_data[127:64];
+              newState.x1 = sipo_data[63:0];
+            end else begin
+              let t = newState.x1[31:0];
+              newState.x0 = sipo_data[127:64];
+              newState.x1 = {sipo_data[63:32],setBytes(t, sipo_data[31:0], inPadarg)};
+            end
+          end
+        endcase
       end
       asconState <= newState;
       
@@ -241,20 +266,20 @@ module mkAsconCC(CryptoCoreIfc);
         roundCounter <= roundCounter - 2;
       end else if(roundCounter == 0) begin
         if(initStep) begin
-          $display("INIT STEP ", $time);
+          // $display("INIT STEP ", $time);
           let newState = cXOR(asconState, keyR);
           asconState <= newState;
           initStep <= False; 
           xState <= ABSORB_SQUEEZE;
-          $display(print_state("Initiatiozation ", newState));
+          // $display(print_state("Initiatiozation ", newState));
         end else if(finalADStep) begin
-          $display("Domain Sep ", $time);
+          // $display("Domain Sep ", // $time);
           finalADStep <= False;
           let newState = domainSep(asconState);
           asconState <= newState;
           xState <= ABSORB_SQUEEZE;
         end else if(emitTag) begin
-            $display("Emit Tag ", $time);
+            // $display("Emit Tag ", // $time);
             let newState = cXOR(asconState, keyR);
             emitTag <= False;
            // outputTag <= True;
@@ -264,7 +289,7 @@ module mkAsconCC(CryptoCoreIfc);
           xState <= ABSORB_SQUEEZE;
         end
        
-        $display("Done ", $time);
+        // $display("Done ", $time);
         
       
       end
