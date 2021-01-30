@@ -264,10 +264,10 @@ module mkAsconCC(CryptoCoreIfc);
         
         asconState <= newState;
         roundCounter <= roundCounter - 2;
-      end else if(roundCounter == 0) begin
+      end else if(roundCounter == 2) begin
         if(initStep) begin
           // $display("INIT STEP ", $time);
-          let newState = cXOR(asconState, keyR);
+          let newState = cXOR(asconRound2(asconState, roundCounter - 1), keyR);
           asconState <= newState;
           initStep <= False; 
           xState <= ABSORB_SQUEEZE;
@@ -275,12 +275,12 @@ module mkAsconCC(CryptoCoreIfc);
         end else if(finalADStep) begin
           // $display("Domain Sep ", // $time);
           finalADStep <= False;
-          let newState = domainSep(asconState);
+          let newState = domainSep(asconRound2(asconState, roundCounter - 1));
           asconState <= newState;
           xState <= ABSORB_SQUEEZE;
         end else if(emitTag) begin
             // $display("Emit Tag ", // $time);
-            let newState = cXOR(asconState, keyR);
+            let newState = cXOR(asconRound2(asconState, roundCounter - 1), keyR);
             emitTag <= False;
            // outputTag <= True;
             asconState <= newState;

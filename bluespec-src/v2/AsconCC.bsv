@@ -56,6 +56,7 @@ module mkAsconCC(CryptoCoreIfc);
     Reg#(CountType#(4)) bdiValidBytes <- mkRegU;
     Reg#(Bit#(2)) inPadarg  <- mkRegU;
     Reg#(Bit#(2)) outPadarg <- mkRegU;
+    Reg#(Bool) outLastOfType <- mkRegU;
     let sipoCount = sipo.count;
     let sipoCount4 = pack(sipoCount)[1] == 1 && pack(sipoCount)[0] == 1;
    // let sipoCount8 = pack(sipoCount)[2] == 1 && sipoCount4;
@@ -135,6 +136,7 @@ module mkAsconCC(CryptoCoreIfc);
                 bdoValidBytes = inPaddedBlockZero ? 0 : bdiValidBytes;
                 inPaddedBlockZero <= False;
                 outPadarg <= inPadarg;
+                outLastOfType <= inLastOfType;
               end else begin
                 emitTag <= False;
                 roundCounter <= fromInteger(valueOf(Pb));
@@ -251,6 +253,7 @@ module mkAsconCC(CryptoCoreIfc);
       let outState = cXOR(asconState, keyR);
       piso.enq(toChunks({asconState.x3, asconState.x4}), 4);
       outPadarg <= 0;
+      outLastOfType <= True;
       xState <= ABSORB_SQUEEZE;
     endrule
 
@@ -264,10 +267,10 @@ module mkAsconCC(CryptoCoreIfc);
         
         asconState <= newState;
         roundCounter <= roundCounter - 1;
-      end else if(roundCounter == 0) begin
+      end else if(roundCounter == 1) begin
         if(initStep) begin
           // $display("INIT STEP ", $time);
-          let newState = cXOR(asconState, keyR);
+          let newState = cXOR(asconRound(asconState, roundCounter - 1), keyR);
           asconState <= newState;
           initStep <= False; 
           xState <= ABSORB_SQUEEZE;
@@ -275,12 +278,12 @@ module mkAsconCC(CryptoCoreIfc);
         end else if(finalADStep) begin
           // $display("Domain Sep ", // $time);
           finalADStep <= False;
-          let newState = domainSep(asconState);
+          let newState = domainSep(asconRound(asconState, roundCounter - 1));
           asconState <= newState;
           xState <= ABSORB_SQUEEZE;
         end else if(emitTag) begin
             // $display("Emit Tag ", // $time);
-            let newState = cXOR(asconState, keyR);
+            let newState = cXOR(asconRound(asconState, roundCounter - 1), keyR);
             emitTag <= False;
            // outputTag <= True;
             asconState <= newState;
@@ -349,7 +352,7 @@ module mkAsconCC(CryptoCoreIfc);
     interface FifoOut bdo;
       method deq = piso.deq;
       method first;
-        let lot = (piso.count == 1) && inLastOfType;
+        let lot = (piso.count == 1) && outLastOfType;
         return BdIO {word: piso.first, lot: lot, padarg: outPadarg} ;
       endmethod
       method notEmpty = piso.notEmpty;
